@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0c66e4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>דיווח שעות - ט.ל.</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%230c66e4'/%3E%3Ctext x='90' y='115' text-anchor='middle' fill='white' font-size='90' font-family='Arial'%3E%E2%8F%B0%3C/text%3E%3C/svg%3E">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(180deg, #0c66e4 0%, #0747a6 100%);
+    color: #1f2937;
+    min-height: 100vh;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .app { width: 100%; max-width: 420px; }
+  header {
+    text-align: center;
+    color: white;
+    margin-bottom: 18px;
+    padding-top: 8px;
+  }
+  .greeting { font-size: 13px; opacity: 0.85; margin-bottom: 4px; }
+  .employee-name { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .date { font-size: 14px; opacity: 0.9; }
+
+  .status-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 14px;
+  }
+  .status-card h3 {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .status-card h3 .total {
+    color: #0c66e4;
+    font-weight: 700;
+    font-size: 14px;
+    direction: ltr;
+  }
+  .session-list { display: flex; flex-direction: column; gap: 6px; }
+  .session {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border-right: 3px solid #d1d5db;
+    font-size: 14px;
+  }
+  .session.open {
+    border-right-color: #10b981;
+    background: #ecfdf5;
+  }
+  .session.closed { border-right-color: #6366f1; }
+  .session-times { display: flex; gap: 6px; align-items: center; direction: ltr; font-variant-numeric: tabular-nums; }
+  .session-times .arrow { color: #9ca3af; }
+  .session-hours { font-weight: 600; color: #4b5563; font-size: 13px; }
+  .session-status-pill {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .empty-state { text-align: center; color: #9ca3af; font-size: 14px; padding: 14px 0; }
+
+  .special-banner {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .button-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .big-btn {
+    width: 100%;
+    padding: 22px;
+    border: none;
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    transition: transform 0.1s, opacity 0.2s;
+    color: white;
+  }
+  .big-btn:active { transform: scale(0.97); }
+  .big-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-in { background: #10b981; }
+  .btn-out { background: #ef4444; }
+
+  .btn-special {
+    background: rgba(255,255,255,0.95);
+    color: #4b5563;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .btn-special:active { transform: scale(0.98); }
+
+  .footer {
+    text-align: center;
+    margin-top: 16px;
+    color: rgba(255,255,255,0.75);
+    font-size: 12px;
+  }
+  .footer button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 20px;
+    animation: slideUp 0.2s;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal h2 { font-size: 19px; margin-bottom: 14px; text-align: center; }
+  .modal-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .opt-btn {
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: right;
+    color: #374151;
+  }
+  .opt-btn:active { background: #f3f4f6; }
+  .opt-cancel {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #f3f4f6;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    color: #6b7280;
+  }
+  .time-confirm-input {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
+    font-size: 28px;
+    font-family: inherit;
+    text-align: center;
+    direction: ltr;
+    margin: 14px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-confirm { background: #0c66e4; color: white; }
+  .btn-cancel { background: #f3f4f6; color: #374151; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1f2937;
+    color: white;
+    padding: 14px 22px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 200;
+    transition: transform 0.3s;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #dc2626; }
+
+  .loader {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .full-loader {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 300;
+  }
+  .full-loader.show { display: flex; }
+  .full-loader .loader {
+    width: 36px; height: 36px;
+    border-color: rgba(12, 102, 228, 0.3);
+    border-top-color: #0c66e4;
+  }
+
+  .err-screen {
+    background: white;
+    padding: 40px 24px;
+    border-radius: 16px;
+    text-align: center;
+    color: #dc2626;
+  }
+  .err-screen h1 { font-size: 22px; margin-bottom: 10px; }
+  .err-screen p { color: #6b7280; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header>
+    <div class="greeting" id="greeting">בוקר טוב</div>
+    <div class="employee-name" id="empName">—</div>
+    <div class="date" id="dateDisp">—</div>
+  </header>
+
+  <div class="status-card">
+    <h3>
+      <span>קטעי עבודה היום</span>
+      <span class="total" id="totalHours"></span>
+    </h3>
+    <div class="session-list" id="sessionList">
+      <div class="empty-state">אין דיווחים היום</div>
+    </div>
+    <div class="special-banner" id="specialBanner" style="display:none"></div>
+  </div>
+
+  <div class="button-stack">
+    <button class="big-btn btn-in" id="btnIn" onclick="onMarkEntry()">סמן כניסה</button>
+    <button class="big-btn btn-out" id="btnOut" onclick="onMarkExit()">סמן יציאה</button>
+  </div>
+
+  <button class="btn-special" onclick="openSpecialModal()">דווח יום מיוחד (מחלה / חופש / חג / מילואים)</button>
+
+  <div class="footer">
+    <button onclick="refreshStatus(true)">רענן סטטוס</button>
+  </div>
+</div>
+
+<div class="overlay" id="specialOverlay">
+  <div class="modal">
+    <h2>סוג היום</h2>
+    <div class="modal-options" id="specialOptions">
+      <button class="opt-btn" data-idx="1">🤒 יום מחלה</button>
+      <button class="opt-btn" data-idx="2">🏖️ יום חופש</button>
+      <button class="opt-btn" data-idx="3">🕎 חג</button>
+      <button class="opt-btn" data-idx="4">🎖️ מילואים</button>
+    </div>
+    <button class="opt-cancel" onclick="closeSpecialModal()">ביטול</button>
+  </div>
+</div>
+
+<div class="overlay" id="timeOverlay">
+  <div class="modal">
+    <h2 id="timeModalTitle">אישור שעה</h2>
+    <input type="time" id="timeInput" class="time-confirm-input">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTimeModal()">ביטול</button>
+      <button class="btn-confirm" id="timeConfirmBtn">אישור ושליחה</button>
+    </div>
+  </div>
+</div>
+
+<div class="full-loader" id="loader"><div class="loader"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjY1Mzg2Mzc1MCwiYWFpIjoxMSwidWlkIjoxNzUzMjcxNiwiaWFkIjoiMjAyNi0wNS0wNVQwNjowODo1OC41MzJaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NzY5NTMzMSwicmduIjoidXNlMSJ9.QgRo3uI3ACX6f1mNupc3VdT4IzCE6HTCNtNyOUeh4jc';
+const BOARD_ID = 18411499025;
+const COL_EMP     = 'single_selectut0yc1u';
+const COL_DATE    = 'datel4rhkr7r';
+const COL_DAYTYPE = 'single_select6r6p4qc';
+const COL_ARRIVAL = 'short_text6jb4mfyc';
+const COL_END     = 'short_texted6okf21';
+
+const employees = [
+  { idx: 0, name: 'ליאור דיטור' },
+  { idx: 1, name: 'גל כהן' },
+  { idx: 2, name: 'בר פרץ' },
+  { idx: 3, name: 'יפעת כונקה' },
+  { idx: 4, name: 'בן סולומון' },
+  { idx: 5, name: 'איציק בר דוד' },
+  { idx: 6, name: 'זוהדי אלנאברי' },
+  { idx: 7, name: 'מוחמד והדאן' },
+  { idx: 8, name: 'בר פאסי' }
+];
+const dayTypeNames = ['יום עבודה רגיל','יום מחלה','יום חופש','חג','מילואים'];
+
+const params = new URLSearchParams(window.location.search);
+const empIdx = parseInt(params.get('emp'));
+const employee = employees[empIdx];
+
+if (!employee) {
+  document.getElementById('app').innerHTML = `
+    <div class="err-screen">
+      <h1>קישור לא תקין</h1>
+      <p>הקישור חסר את פרטי העובד. פנה/י למנהל לקבלת קישור אישי.</p>
+    </div>`;
+}
+
+let openSessionId = null;
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+function getTodayISO() { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function getDateDisplay() { const d=new Date(); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`; }
+function getNowTime() { const d=new Date(); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'בוקר טוב';
+  if (h < 17) return 'צהריים טובים';
+  if (h < 21) return 'ערב טוב';
+  return 'לילה טוב';
+}
+
+function showLoader(s) { document.getElementById('loader').classList.toggle('show', s); }
+let toastTimer;
+function toast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+async function callMonday(query, variables) {
+  const res = await fetch('https://api.monday.com/v2', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': TOKEN },
+    body: JSON.stringify({ query, variables })
+  });
+  const json = await res.json();
+  if (json.errors) {
+    console.error(json.errors);
+    throw new Error(json.errors[0]?.message || 'API error');
+  }
+  return json.data;
+}
+
+async function findTodayItems() {
+  const today = getTodayISO();
+  const query = `
+    query($boardId: ID!) {
+      boards(ids: [$boardId]) {
+        items_page(limit: 50, query_params: {
+          rules: [
+            { column_id: "${COL_EMP}",  compare_value: [${empIdx}] },
+            { column_id: "${COL_DATE}", compare_value: ["${today}", "EXACT"] }
+          ],
+          operator: and
+        }) {
+          items {
+            id
+            created_at
+            column_values(ids: ["${COL_ARRIVAL}", "${COL_END}", "${COL_DAYTYPE}"]) {
+              id
+              text
+            }
+          }
+        }
+      }
+    }`;
+  const data = await callMonday(query, { boardId: BOARD_ID });
+  const items = data.boards[0].items_page.items;
+  items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  return items;
+}
+
+function parseHours(timeStr) {
+  if (!timeStr || !/:/.test(timeStr)) return null;
+  const [h, m] = timeStr.split(':').map(s => parseInt(s, 10));
+  if (isNaN(h) || isNaN(m)) return null;
+  return h + m/60;
+}
+
+function formatHours(h) {
+  const whole = Math.floor(h);
+  const mins = Math.round((h - whole) * 60);
+  return `${whole}:${pad2(mins)}`;
+}
+
+async function refreshStatus(showToastFlag) {
+  if (!employee) return;
+  try {
+    showLoader(true);
+    const items = await findTodayItems();
+    const cv = (item, id) => item.column_values.find(c => c.id === id)?.text || '';
+
+    const workSessions = [];
+    let specialDay = null;
+    openSessionId = null;
+    let totalHours = 0;
+
+    for (const item of items) {
+      const arrival = cv(item, COL_ARRIVAL);
+      const exit = cv(item, COL_END);
+      const dayType = cv(item, COL_DAYTYPE);
+
+      if (dayType && dayType !== 'יום עבודה רגיל') {
+        specialDay = dayType;
+      } else {
+        if (arrival || exit) {
+          const isOpen = arrival && !exit;
+          if (isOpen) openSessionId = item.id;
+          let hrs = 0;
+          if (arrival && exit) {
+            const ah = parseHours(arrival), eh = parseHours(exit);
+            if (ah !== null && eh !== null) {
+              hrs = eh - ah;
+              totalHours += hrs;
+            }
+          }
+          workSessions.push({ id: item.id, arrival, exit, isOpen, hrs });
+        }
+      }
+    }
+
+    const listEl = document.getElementById('sessionList');
+    if (workSessions.length === 0 && !specialDay) {
+      listEl.innerHTML = '<div class="empty-state">אין דיווחים היום</div>';
+    } else if (workSessions.length === 0 && specialDay) {
+      listEl.innerHTML = '<div class="empty-state">לא נדרש דיווח שעות</div>';
+    } else {
+      listEl.innerHTML = workSessions.map((s) => `
+        <div class="session ${s.isOpen ? 'open' : 'closed'}">
+          <span class="session-times">
+            <span>${s.arrival || '--:--'}</span>
+            <span class="arrow">→</span>
+            <span>${s.exit || '--:--'}</span>
+          </span>
+          ${s.isOpen
+            ? '<span class="session-status-pill">פתוח</span>'
+            : `<span class="session-hours">${formatHours(s.hrs)} שעות</span>`}
+        </div>
+      `).join('');
+    }
+
+    const totalEl = document.getElementById('totalHours');
+    totalEl.textContent = totalHours > 0 ? `סה"כ ${formatHours(totalHours)}` : '';
+
+    const banner = document.getElementById('specialBanner');
+    if (specialDay) {
+      banner.style.display = 'block';
+      banner.textContent = `דווח: ${specialDay}`;
+    } else {
+      banner.style.display = 'none';
+    }
+
+    const btnIn = document.getElementById('btnIn');
+    const btnOut = document.getElementById('btnOut');
+    btnIn.disabled = !!openSessionId;
+    btnOut.disabled = !openSessionId;
+
+    if (showToastFlag) toast('סטטוס עודכן');
+  } catch (e) {
+    toast('שגיאה: ' + e.message, true);
+  } finally {
+    showLoader(false);
+  }
+}
+
+let pendingAction = null;
+function openTimeModal(title, defaultTime, action) {
+  document.getElementById('timeModalTitle').textContent = title;
+  document.getElementById('timeInput').value = defaultTime;
+  pendingAction = action;
+  document.getElementById('timeOverlay').classList.add('show');
+}
+function closeTimeModal() {
+  document.getElementById('timeOverlay').classList.remove('show');
+  pendingAction = null;
+}
+document.getElementById('timeConfirmBtn').addEventListener('click', async () => {
+  const time = document.getElementById('timeInput').value;
+  if (!time) { toast('נא לבחור שעה', true); return; }
+  closeTimeModal();
+  if (pendingAction) await pendingAction(time);
+});
+
+function onMarkEntry() {
+  if (!employee) return;
+  if (openSessionId) {
+    toast('יש קטע פתוח - צריך לסמן יציאה קודם', true);
+    return;
+  }
+  openTimeModal('שעת כניסה', getNowTime(), async (time) => {
+    try {
+      showLoader(true);
+      const itemName = `${employee.name} - ${getDateDisplay()}`;
+      const colVals = JSON.stringify({
+        [COL_EMP]: { index: empIdx },
+        [COL_DATE]: { date: getTodayISO() },
+        [COL_DAYTYPE]: { index: 0 },
+        [COL_ARRIVAL]: time
+      });
+      const mutation = `
+        mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+          create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) { id }
+        }`;
+      await callMonday(mutation, { boardId: BOARD_ID, itemName, columnValues: colVals });
+      toast(`כניסה נרשמה ב-${time}`);
+      await refreshStatus();
+    } catch (e) { toast('שגיאה: ' + e.message, true); }
+    finally { showLoader(false); }
+  });
+}
+
+function onMarkExit() {
+  if (!employee) return;
+  if (!openSessionId) {
+    toast('אין קטע פתוח - צריך לסמן כניסה קודם', true);
+    return;
+  }
+  const itemId = openSessionId;
+  openTimeModal('שעת יציאה', getNowTime(), async (time) => {
+    try {
+      showLoader(true);
+      const mutation = `
+        mutation($boardId: ID!, $itemId: ID!, $columnId: String!, $value: String!) {
+          change_simple_column_value(board_id: $boardId, item_id: $itemId, column_id: $columnId, value: $value) { id }
+        }`;
+      await callMonday(mutation, {
+        boardId: BOARD_ID, itemId: itemId, columnId: COL_END, value: time
+      });
+      toast(`יציאה נרשמה ב-${time}`);
+      await refreshStatus();
+    } catch (e) { toast('שגיאה: ' + e.message, true); }
+    finally { showLoader(false); }
+  });
+}
+
+function openSpecialModal() { document.getElementById('specialOverlay').classList.add('show'); }
+function closeSpecialModal() { document.getElementById('specialOverlay').classList.remove('show'); }
+document.querySelectorAll('#specialOptions .opt-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const idx = parseInt(btn.dataset.idx);
+    const dayName = dayTypeNames[idx];
+    if (!confirm(`לסמן את היום כ"${dayName}"?`)) return;
+    closeSpecialModal();
+    try {
+      showLoader(true);
+      const itemName = `${employee.name} - ${getDateDisplay()} - ${dayName}`;
+      const colVals = JSON.stringify({
+        [COL_EMP]: { index: empIdx },
+        [COL_DATE]: { date: getTodayISO() },
+        [COL_DAYTYPE]: { index: idx }
+      });
+      const mutation = `
+        mutation($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+          create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) { id }
+        }`;
+      await callMonday(mutation, { boardId: BOARD_ID, itemName, columnValues: colVals });
+      toast(`נרשם: ${dayName}`);
+      await refreshStatus();
+    } catch (e) { toast('שגיאה: ' + e.message, true); }
+    finally { showLoader(false); }
+  });
+});
+
+if (employee) {
+  document.getElementById('greeting').textContent = getGreeting();
+  document.getElementById('empName').textContent = employee.name;
+  document.getElementById('dateDisp').textContent = getDateDisplay();
+  refreshStatus();
+}
+</script>
+</body>
+</html>
